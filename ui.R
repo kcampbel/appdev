@@ -47,6 +47,9 @@ shinyUI(navbarPage("Expression Explorer",
                               # Side bar options: Select genes
                               # Color by clinical feature
                               sidebarPanel(
+                                h3("Sample Specification"),
+                                selectInput("colorGroup", "Color: ", NULL, multiple = FALSE),
+                                h3("Gene Selection"),
                                 selectizeInput("gene_input", "Select up to 20 gene identifiers:", NULL, multiple = TRUE, options = list(maxOptions = 20)),
                                 checkboxInput("logFPKM", "Log FPKM", value = TRUE),
                                 selectInput("x_corrScatter", "X axis", NULL, multiple = FALSE),
@@ -54,9 +57,13 @@ shinyUI(navbarPage("Expression Explorer",
                                 radioButtons("corrMethod", "Correlation method: ", choices = list("Pearson" = "pearson", "Kendall" = "kendall", "Spearman" = "spearman"), selected = "pearson", inline = TRUE)
                               ),
                               mainPanel(
-                                plotlyOutput("geneBoxplots"),
-                                plotlyOutput("corrScatter")
-                                # dataTableOutput("geneHeatmap")
+                                tabsetPanel(
+                                  tabPanel("Gene Expression Distributions",
+                                           plotlyOutput("geneBoxplots"),
+                                           plotlyOutput("dualGeneHistograms")),
+                                  tabPanel("Correlation",
+                                           plotlyOutput("corrScatter"))
+                                )
                               )
                             )
                    )

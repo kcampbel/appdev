@@ -50,10 +50,9 @@ shinyServer(function(input, output, session) {
     selected <- as.character(fpkmMatrix()[,1])
     return(selected)
   })
-  observe({
-    updateSelectizeInput(session, "gene_input",
-                         choices = geneOptions(), server = TRUE)
-  })
+  observe({ updateSelectizeInput(session, "gene_input", choices = geneOptions(), server = TRUE) })
+  observe({ updateSelectInput(session, "colorGroup", choices = colnames(sampleMatrix())) })
+  #
   subsetByGene <- reactive({ 
     if(is.null(fpkmMatrix()))
       return(NULL)
@@ -90,6 +89,31 @@ shinyServer(function(input, output, session) {
     })
     return(p)
   })
+  output$dualGeneHistograms <- renderPlotly({
+    if(is.null(subsetByGene()) | is.null(input$gene_input))
+      return(NULL)
+    
+    formatData <- subsetByGene() %>% filter(geneName %in% c("HLA-A",input$x_corrScatter, input$y_corrScatter)) %>%
+      gather(colnameFPKM, fpkm, -geneName) %>% 
+      mutate(logFPKM = ifelse(is.na(fpkm)==F, log10(fpkm+1), NA))
+    if(input$logFPKM == TRUE){
+      plotX = "log10(fpkm+1)"
+      labelX = "Log FPKM"
+    } else {
+      plotX = "fpkm"
+      labelX = "FPKM"
+    }
+    q <- ggplot(formatData, aes_string(x = plotX)) +
+      geom_histogram(colour = 'white', alpha = 0.4) +
+      scale_fill_brewer(palette = 'Set1') +
+      labs(x = labelX) +
+      theme_bw() +
+      theme(text = element_text(size = 10), title = element_text(size = 12, face = 'bold')) +
+      facet_wrap(~geneName, scales = 'free')
+    p <- plotly_build(q)
+    return(p)
+  })
+  
   output$corrScatter <- renderPlotly({
     if(is.null(subsetByGene()) | is.null(input$gene_input))
       return(NULL)
